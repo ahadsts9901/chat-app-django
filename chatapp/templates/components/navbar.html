@@ -1,0 +1,29 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light px-4 py-2 border-bottom">
+  <div class="container-fluid">
+    
+    <!-- Left side: Back button + user info -->
+    <div class="d-flex align-items-center">
+      
+      <!-- Back Button -->
+      <button onclick="history.back()" class="btn btn-outline-secondary me-3">
+          <i class="bi bi-arrow-left-circle"></i>
+      </button>
+
+      <!-- User Info -->
+      <a href="{% url 'profile' %}" class="text-dark text-decoration-none d-flex align-items-center">
+        {% if request.user.userprofile.image %}
+          <img src="{{ request.user.userprofile.image.url }}" alt="Profile" class="rounded-circle me-2" width="40" height="40">
+        {% else %}
+          <img src="/media/profile_images/default.png" alt="Profile" class="rounded-circle me-2" width="40" height="40">
+        {% endif %}
+        <span class="fw-bold">{{ request.user.get_full_name }}</span>
+      </a>
+    </div>
+
+    <!-- Right side: logout -->
+    <div class="ms-auto">
+      <a href="{% url 'logout' %}" class="btn btn-outline-danger">Logout</a>
+    </div>
+
+  </div>
+</nav>

@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from .forms import LoginForm, SignupForm
 from .models import UserProfile
@@ -68,3 +68,7 @@ def custom_404_view(request, exception):
     if not request.user.is_authenticated:
         return redirect('login')
     return redirect('users')
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
