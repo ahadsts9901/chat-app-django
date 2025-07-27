@@ -1,8 +1,8 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from .forms import LoginForm, SignupForm, UserProfileForm
-from .models import UserProfile
+from .forms import LoginForm, SignupForm, UserProfileForm, ChatMessageForm
+from .models import UserProfile, ChatMessage
 from django.contrib.auth.decorators import login_required
 from .constants import default_profile_picture
 
@@ -94,5 +94,62 @@ def users(request):
         "default_profile_picture": default_profile_picture
     })
 
+@login_required
 def chat(request, user_id):
-    return render(request,"pages/chat.html",{"user_id": user_id})
+    other_user = get_object_or_404(User, id=user_id)
+    user = request.user
+
+    # Handle form submission
+    if request.method == 'POST':
+        form = ChatMessageForm(request.POST)
+        if form.is_valid():
+            chat = form.save(commit=False)
+            chat.from_user = user
+            chat.to_user = other_user
+            chat.save()
+            return redirect('chat', user_id=other_user.id)
+    else:
+        form = ChatMessageForm()
+
+    # Get chat history between these two users
+    messages = ChatMessage.objects.filter(
+        from_user__in=[user, other_user],
+        to_user__in=[user, other_user]
+    ).order_by('created_at')
+
+    return render(request, 'pages/chat.html', {
+        'other_user': other_user,
+        'form': form,
+        'messages': messages,
+        'default_profile_picture': "/media/profile_images/default.png"
+    })
+
+from django.http import HttpResponseForbidden
+from .models import ChatMessage
+from .forms import ChatMessageForm
+
+@login_required
+def edit_message(request, msg_id):
+    msg = get_object_or_404(ChatMessage, id=msg_id)
+    if msg.from_user != request.user:
+        return HttpResponseForbidden()
+
+    if request.method == 'POST':
+        form = ChatMessageForm(request.POST, instance=msg)
+        if form.is_valid():
+            form.save()
+            return redirect('chat', user_id=msg.to_user.id if msg.to_user != request.user else msg.from_user.id)
+    else:
+        form = ChatMessageForm(instance=msg)
+
+    return render(request, 'pages/edit_message.html', {'form': form})
+
+@login_required
+def delete_message(request, msg_id):
+    msg = get_object_or_404(ChatMessage, id=msg_id)
+    if msg.from_user != request.user:
+        return HttpResponseForbidden()
+
+    other_user = msg.to_user if msg.to_user != request.user else msg.from_user
+    msg.delete()
+    return redirect('chat', user_id=other_user.id)

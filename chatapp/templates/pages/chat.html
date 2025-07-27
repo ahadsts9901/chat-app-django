@@ -1,9 +1,68 @@
 {% extends "layout.html" %}
 
 {% block title %}
-Chat {{user_id}}
+Chat {{other_user.id}}
 {% endblock  %}
 
 {% block content %}
-<h1>Chat {{user_id}}</h1>
+
+<!-- main navbar -->
+{% include "components/navbar.html" with default_profile_picture=default_profile_picture %}
+
+<!-- opposite user navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light px-4 py-2 border-bottom">
+  <div class="container-fluid">
+    <div class="d-flex align-items-center">
+      <!-- User Info -->
+        {% if request.user.userprofile.image %}
+          <img src="{{ other_user.userprofile.image.url }}" alt="Profile" class="rounded-circle me-2" width="40" height="40">
+        {% else %}
+          <img src="{{default_profile_picture}}" alt="Profile" class="rounded-circle me-2" width="40" height="40">
+        {% endif %}
+        <span class="fw-bold">{{ other_user.get_full_name }}</span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- chat form -->
+<div class="container py-4">
+  <div class="mb-4">
+    {% for msg in messages %}
+      {% if msg.from_user == request.user %}
+        <!-- Your message: aligned right -->
+        <div class="d-flex justify-content-end mb-3">
+          <div class="text-white p-3 rounded" style="max-width: 75%; background-color: #256dd8ff;">
+            <div>{{ msg.message }}</div>
+            <div class="text-end small mt-1">
+              {{ msg.created_at|date:"M d, H:i" }}
+              <a href="{% url 'edit_message' msg.id %}" class="text-white ms-2">Edit</a>
+              <a href="{% url 'delete_message' msg.id %}" class="text-white ms-2">Delete</a>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <!-- Other user's message: aligned left -->
+        <div class="d-flex justify-content-start mb-3">
+          <div class="text-dark p-3 rounded" style="max-width: 75%; background-color: #dfdfdfff;">
+            <div><strong>{{ msg.from_user.get_full_name }}:</strong> {{ msg.message }}</div>
+            <div class="text-muted small mt-1">{{ msg.created_at|date:"M d, H:i" }}</div>
+          </div>
+        </div>
+      {% endif %}
+    {% empty %}
+      <p class="text-muted">No messages yet.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Message form -->
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Send</button>
+  </form>
+
+</div>
+
+
 {% endblock  %}

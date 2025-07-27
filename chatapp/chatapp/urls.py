@@ -31,6 +31,8 @@ urlpatterns = [
     path('profile/', views.profile, name="profile"),
     path('users/', views.users, name="users"),
     path('chat/<int:user_id>/', views.chat, name="chat"),
+    path('chat/edit/<int:msg_id>/', views.edit_message, name='edit_message'),
+    path('chat/delete/<int:msg_id>/', views.delete_message, name='delete_message'),
     path('logout/', views.logout_view, name="logout"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
