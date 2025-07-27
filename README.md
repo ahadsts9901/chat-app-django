@@ -33,7 +33,7 @@ A modern real-time chat application built using Django, Channels (WebSockets), a
 1. **Clone the repo**
 
 ```bash
-git clone https://github.com/yourusername/chat-app-django.git
+git clone https://github.com/ahadsts9901/chat-app-django.git
 cd chat-app-django
 ```
 
@@ -51,7 +51,7 @@ pip install -r requirements.txt
 cd chatapp
 ```
 
-4. **Apply migrations and run server**
+4. **Apply migrations and run server (no realtime chat)**
 
 ```bash
 python manage.py makemigrations
