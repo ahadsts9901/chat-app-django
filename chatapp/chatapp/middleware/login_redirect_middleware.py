@@ -7,12 +7,20 @@ class LoginRedirectMiddleware:
 
     def __call__(self, request):
         path = request.path
-        exempt_urls = [reverse('login'), reverse('signup'), '/admin/login/']
 
-        if not request.user.is_authenticated and path not in exempt_urls:
-            return redirect('login')
+        # List of paths or prefixes that are allowed without login
+        exempt_paths_exact = [reverse('login'), reverse('signup')]
+        exempt_paths_prefixes = ['/admin/']  # ✅ allow all admin URLs
 
-        if request.user.is_authenticated and path in exempt_urls:
+        # Allow if path starts with any of the exempt prefixes
+        if not request.user.is_authenticated:
+            if path in exempt_paths_exact or any(path.startswith(prefix) for prefix in exempt_paths_prefixes):
+                pass
+            else:
+                return redirect('login')
+
+        # Redirect logged-in users away from login/signup
+        if request.user.is_authenticated and path in exempt_paths_exact:
             return redirect('users')
 
         return self.get_response(request)

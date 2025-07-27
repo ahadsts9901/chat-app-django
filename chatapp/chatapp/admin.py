@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import UserProfile
+from .models import UserProfile, ChatMessage
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
@@ -19,6 +19,18 @@ class CustomUserAdmin(BaseUserAdmin):
     get_image.allow_tags = True
     get_image.short_description = 'Profile Pic'
 
+class AllMessagesInline(admin.TabularInline):
+    model = ChatMessage
+    extra = 0
+    fields = ('from_user', 'to_user', 'message', 'created_at')
+    readonly_fields = ('from_user', 'to_user', 'message', 'created_at')
+    can_delete = False
+    show_change_link = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(UserProfile)  # Optional: if you want to manage profile separately
+admin.site.register(ChatMessage)

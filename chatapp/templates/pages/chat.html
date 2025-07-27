@@ -31,21 +31,26 @@ Chat {{other_user.id}}
     {% for msg in messages %}
       {% if msg.from_user == request.user %}
         <!-- Your message: aligned right -->
-        <div class="d-flex justify-content-end mb-3">
+        <div class="d-flex justify-content-end mb-3" 
+        id="msg-{{ msg.id }}"
+        >
           <div class="text-white p-3 rounded" style="max-width: 75%; background-color: #256dd8ff;">
-            <div>{{ msg.message }}</div>
+            <div class="message-div">{{ msg.message }}</div>
             <div class="text-end small mt-1">
               {{ msg.created_at|date:"M d, H:i" }}
-              <a href="{% url 'edit_message' msg.id %}" class="text-white ms-2">Edit</a>
-              <a href="{% url 'delete_message' msg.id %}" class="text-white ms-2">Delete</a>
+              <span onclick="editMessage({{ msg.id }}, '{{ msg.message|escapejs }}')" class="text-white ms-2">Edit</span>
+              <span onclick="deleteMessage({{ msg.id }})" class="text-white ms-2">Delete</span>
             </div>
           </div>
         </div>
       {% else %}
         <!-- Other user's message: aligned left -->
-        <div class="d-flex justify-content-start mb-3">
+        <div class="d-flex justify-content-start mb-3" 
+        id="msg-{{ msg.id }}"
+        >
           <div class="text-dark p-3 rounded" style="max-width: 75%; background-color: #dfdfdfff;">
-            <div><strong>{{ msg.from_user.get_full_name }}:</strong> {{ msg.message }}</div>
+            <div class="message-div">
+              {{ msg.message }}</div>
             <div class="text-muted small mt-1">{{ msg.created_at|date:"M d, H:i" }}</div>
           </div>
         </div>
@@ -87,7 +92,8 @@ Chat {{other_user.id}}
     const _data = {
       message: message,
       to_user_id: {{ other_user.id }},
-      from_user_id: '{{ request.user.id }}'
+      from_user_id: '{{ request.user.id }}',
+      message_type: "message",
     }
     socket.send(JSON.stringify(_data));
 
@@ -97,35 +103,70 @@ Chat {{other_user.id}}
   socket.onmessage = function (e) {
       const data = JSON.parse(e.data);
       // console.log("Message Received:", data);
+      const message_type = data?.message_type
 
-      const isOwn = data.from_user_id === {{ request.user.id }};
-      const box = document.createElement('div');
+      if(message_type === "message"){
+          const isOwn = data.from_user_id === {{ request.user.id }};
+          const box = document.createElement('div');
 
-      box.setAttribute('data-message-id', data.id);  // for editing later
+          box.setAttribute('data-message-id', data.id);  // for editing later
 
-      let _html = isOwn ? `
-        <div class="d-flex justify-content-end mb-3">
-          <div class="text-white p-3 rounded" style="max-width: 75%; background-color: #256dd8ff;">
-            <div>${data.message}</div>
-            <div class="text-end small mt-1">
-              ${data.time}
-              <a href="/chat/edit/${data.id}" class="text-white ms-2">Edit</a>
-              <a href="/chat/delete/${data.id}" class="text-white ms-2">Delete</a>
+          let _html = isOwn ? `
+            <div class="d-flex justify-content-end mb-3" id="msg-${data.id}">
+              <div class="text-white p-3 rounded" style="max-width: 75%; background-color: #256dd8ff;">
+                <div class="message-div">${data.message}</div>
+                <div class="text-end small mt-1">
+                  ${data.time}
+                    <span onclick="editMessage(${data.id}, '${data.message.replace(/'/g, "\\'")}')" class="text-white ms-2">Edit</span>
+                    <span onclick="deleteMessage(${data.id})" class="text-white ms-2">Delete</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      ` : `
-        <div class="d-flex justify-content-start mb-3">
-          <div class="text-dark p-3 rounded" style="max-width: 75%; background-color: #dfdfdfff;">
-            <div><strong>${data.from_user}:</strong> ${data.message}</div>
-            <div class="text-muted small mt-1">${data.time}</div>
-          </div>
-        </div>
-      `
+          ` : `
+            <div class="d-flex justify-content-start mb-3" id="msg-${data.id}">
+              <div class="text-dark p-3 rounded" style="max-width: 75%; background-color: #dfdfdfff;">
+                <div class="message-div"> ${data.message}</div>
+                <div class="text-muted small mt-1">${data.time}</div>
+              </div>
+            </div>
+          `
 
-      box.innerHTML = _html
-      document.getElementById('chat-messages').appendChild(box);
+          box.innerHTML = _html
+          document.getElementById('chat-messages').appendChild(box);
+      }
+
+      if (message_type === "delete") {
+        const msgDiv = document.getElementById(`msg-${data.id}`);
+        if (msgDiv) msgDiv.remove();
+      }
+
+      if (message_type === "edit") {
+        const msgDiv = document.getElementById(`msg-${data.id}`);
+        if (msgDiv) {
+          const contentDiv = msgDiv.querySelector('.message-div');  // Assuming structure
+          if (contentDiv) contentDiv.innerText = data.message;
+        }
+      }
+
   };
+
+  function deleteMessage(msgId) {
+    socket.send(JSON.stringify({
+      message_type: "delete",
+      id: msgId
+    }));
+  }
+
+  function editMessage(msgId, oldMessage) {
+    const newMessage = prompt("Edit your message:", oldMessage);
+    if (newMessage && newMessage.trim() !== '') {
+      socket.send(JSON.stringify({
+        message_type: "edit",
+        id: msgId,
+        message: newMessage
+      }));
+    }
+  }
 </script>
 
 {% endblock  %}

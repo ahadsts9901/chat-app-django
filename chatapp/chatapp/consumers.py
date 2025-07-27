@@ -19,6 +19,22 @@ def save_message(from_user_id, to_user_id, message):
         'time': chat.created_at.strftime("%b %d, %H:%M")
     }
 
+@sync_to_async
+def delete_message(message_id):
+    ChatMessage.objects.filter(id=message_id).delete()
+    return message_id
+
+@sync_to_async
+def edit_message(message_id, new_content):
+    msg = ChatMessage.objects.get(id=message_id)
+    msg.message = new_content
+    msg.save()
+    return {
+        'id': msg.id,
+        'message': msg.message,
+        'time': msg.created_at.strftime("%b %d, %H:%M"),
+    }
+
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         user = self.scope["user"]
@@ -47,20 +63,49 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
+        message_type = data.get("message_type")
 
-        message = data.get('message')
-        from_user_id = data.get('from_user_id')
-        to_user_id = data.get('to_user_id')
+        if message_type == "message":
+            from_user_id = data.get('from_user_id')
+            to_user_id = data.get('to_user_id')
+            message = data.get('message')
+            saved_message = await save_message(from_user_id, to_user_id, message)
 
-        saved_message = await save_message(from_user_id, to_user_id, message)
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'chat_message',
+                    'message_type': 'message',
+                    **saved_message
+                }
+            )
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat_message',
-                **saved_message  # send all message data
-            }
-        )
+        elif message_type == "delete":
+            message_id = data.get("id")
+            await delete_message(message_id)
+
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'chat_message',
+                    'message_type': 'delete',
+                    'id': message_id
+                }
+            )
+
+        elif message_type == "edit":
+            message_id = data.get("id")
+            new_content = data.get("message")
+            updated = await edit_message(message_id, new_content)
+
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'chat_message',
+                    'message_type': 'edit',
+                    **updated
+                }
+            )
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps(event))
