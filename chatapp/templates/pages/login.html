@@ -5,5 +5,57 @@ Login
 {% endblock  %}
 
 {% block content %}
-<h1>Login</h1>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Login</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            {{ form.email.label_tag }}
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Password with eye icon -->
+                        <div class="mb-3 position-relative">
+                            {{ form.password.label_tag }}
+                            {{ form.password }}
+                            <i class="bi bi-eye-slash password-toggle" id="togglePassword" onclick="togglePassword()"></i>
+                            {% if form.password.errors %}
+                                <div class="text-danger small">{{ form.password.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        {% if error %}
+                            <div class="alert alert-danger">{{ error }}</div>
+                        {% endif %}
+
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                        <p class="mt-3 mb-0 text-center">
+                            Don't have an account? <a href="{% url 'signup' %}">Sign up</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePassword() {
+    const input = document.getElementById("passwordInput");
+    input.type = input.type === "password" ? "text" : "password";
+}
+</script>
+
 {% endblock  %}

@@ -14,15 +14,27 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
+
 from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('login/',views.login ,name="login"),
-    path('signup/',views.signup ,name="signup"),
-    path('profile/', views.profile,name="profile"),
-    path('users/', views.users,name="users"),
-    path('chat/<int:user_id>',views.chat ,name="chat"),
+    path('login/', views.login_view, name="login"),
+    path('signup/', views.signup, name="signup"),
+    path('profile/', views.profile, name="profile"),
+    path('users/', views.users, name="users"),
+    path('chat/<int:user_id>/', views.chat, name="chat"),  # added trailing slash
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Set 404 error handler (must be at module level)
+handler404 = 'chatapp.views.custom_404_view'
+
