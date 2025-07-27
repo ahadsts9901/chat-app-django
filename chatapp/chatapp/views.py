@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from .forms import LoginForm, SignupForm, UserProfileForm
 from .models import UserProfile
 from django.contrib.auth.decorators import login_required
+from .constants import default_profile_picture
 
 def login_view(request):
     form = LoginForm(request.POST or None)
@@ -82,11 +83,16 @@ def profile(request):
     else:
         form = UserProfileForm(instance=profile, user=user)
 
-    return render(request, 'pages/profile.html', {'form': form})
+    return render(request, 'pages/profile.html', {'form': form, "default_profile_picture": default_profile_picture})
 
-
+@login_required
 def users(request):
-    return render(request,"pages/users.html")
+    all_users = User.objects.exclude(id=request.user.id)
+    return render(request, 'pages/users.html', {
+        'users': all_users,
+        'current_user': request.user,
+        "default_profile_picture": default_profile_picture
+    })
 
 def chat(request, user_id):
     return render(request,"pages/chat.html",{"user_id": user_id})

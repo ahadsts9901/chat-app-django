@@ -1,0 +1,1 @@
+default_profile_picture = "/media/profile_images/default.png"

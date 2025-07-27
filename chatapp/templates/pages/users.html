@@ -1,11 +1,42 @@
 {% extends "layout.html" %}
+{% load static %}
 
-{% block title %}
-Users
-{% endblock  %}
+{% block title %}Users{% endblock %}
 
 {% block content %}
+{% include "components/navbar.html" with default_profile_picture=default_profile_picture %}
 
-{% include "components/navbar.html" %}
+<div class="container py-4">
+  <h4 class="mb-4">Users</h4>
 
-{% endblock  %}
+  <!-- Logged-in user shown separately -->
+  <div class="d-flex align-items-center mb-3 p-2 border rounded bg-light">
+    {% if request.user.userprofile.image %}
+      <img src="{{ request.user.userprofile.image.url }}" class="rounded-circle me-3" width="50" height="50" alt="Profile">
+    {% else %}
+      <img src="{{default_profile_picture}}" class="rounded-circle me-3" width="50" height="50" alt="Profile">
+    {% endif %}
+    <div>
+      <strong>{{ request.user.get_full_name }}</strong> <span class="text-muted">(you)</span>
+    </div>
+  </div>
+
+  <!-- List of all other users -->
+  {% for user in users %}
+  <a href="{% url 'chat' user.id %}" class="text-decoration-none text-dark">
+    <div class="d-flex align-items-center mb-2 p-2 border rounded hover-shadow">
+      {% if user.userprofile.image %}
+        <img src="{{ user.userprofile.image.url }}" class="rounded-circle me-3" width="50" height="50" alt="{{ user.get_full_name }}">
+      {% else %}
+        <img src="{{default_profile_picture}}" class="rounded-circle me-3" width="50" height="50" alt="{{ user.get_full_name }}">
+      {% endif %}
+      <strong>{{ user.get_full_name }}</strong>
+    </div>
+  </a>
+  {% empty %}
+    <p>No other users found.</p>
+  {% endfor %}
+
+</div>
+
+{% endblock %}

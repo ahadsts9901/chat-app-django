@@ -5,7 +5,7 @@ Profile
 {% endblock  %}
 
 {% block content %}
-{% include "components/navbar.html" %}
+{% include "components/navbar.html" with default_profile_picture=default_profile_picture %}
 
 <div class="container mt-4">
   <h2>Edit Profile</h2>
