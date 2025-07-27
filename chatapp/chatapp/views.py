@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from .forms import LoginForm, SignupForm, UserProfileForm, ChatMessageForm
 from .models import UserProfile, ChatMessage
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
 from .constants import default_profile_picture
 
 def login_view(request):
@@ -123,10 +124,6 @@ def chat(request, user_id):
         'messages': messages,
         'default_profile_picture': "/media/profile_images/default.png"
     })
-
-from django.http import HttpResponseForbidden
-from .models import ChatMessage
-from .forms import ChatMessageForm
 
 @login_required
 def edit_message(request, msg_id):
